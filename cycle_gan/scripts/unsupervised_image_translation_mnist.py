@@ -75,19 +75,19 @@ G_optimizer = optim.Adam(G.parameters(), lr = 1e-4)
 F_optimizer = optim.Adam(F.parameters(), lr = 1e-4)
 D_X_optimizer = optim.Adam(D_X.parameters(), lr = 1e-4)
 D_Y_optimizer = optim.Adam(D_Y.parameters(), lr = 1e-4)
-writer = SummaryWriter('runs/mnist_cycle_gan/')
+writer = SummaryWriter()
 
 # Train network
 
-for epoch in range(2):
-  train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer, unsupervised_train_loader, writer)
+for epoch in range(1):
+  train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer, unsupervised_train_loader, writer, test_loader)
 
 
 save_model('../models/simple_gan_mnist_G.pt', G, F, '../models/simple_gan_mnist_F.pt')
 G, F = load_model('../models/simple_gan_mnist_G.pt', '../models/simple_gan_mnist_F.pt')
 
 
-visualize_predictions(unsupervised_test_loader, G)
+visualize_predictions(test_loader, G, 1 * 100 + 5, writer)
 
 
 

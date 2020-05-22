@@ -41,7 +41,7 @@ from sklearn.model_selection import train_test_split
 from simple_gan_network import Generator, Discriminator
 import utils
 
-def train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer, train_loader, writer):
+def train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer, train_loader, writer, test_loader):
     G_losses, F_losses = 0, 0
     D_X_losses, D_Y_losses = 0, 0
     for i, (X, Y) in enumerate(train_loader):
@@ -83,28 +83,37 @@ def train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_op
         D_X_losses += D_X_loss.item()
         D_Y_losses += D_Y_loss.item()
 
-        if i % 999 == 0:
-            writer.add_scaler('D_X_loss', D_X_losses/1000, epoch * len(train_loader) + i)
-            writer.add_scaler('D_Y_loss', D_Y_losses/1000, epoch * len(train_loader) + i)
-            writer.add_scaler('G_loss', D_losses/1000, epoch * len(train_loader) + i)
-            writer.add_scaler('F_loss', F_losses/1000, epoch * len(train_loader) + i)
+        if i % 4 == 0:
+            writer.add_scalar('D_X_loss', D_X_losses/5, epoch * 100 + i)
+            writer.add_scalar('D_Y_loss', D_Y_losses/5, epoch * 100 + i)
+            writer.add_scalar('G_loss', G_losses/5, epoch * 100 + i)
+            writer.add_scalar('F_loss', F_losses/5, epoch * 100 + i)
             G_losses, F_losses = 0, 0
             D_X_losses, D_Y_losses = 0, 0
+            visualize_predictions(test_loader, G, epoch * 100 + i, writer)
 
-        if i > 5000:
+        if i > 100:
             return 
 
-def visualize_predictions(test_loader, G):
-    for j, (inputs, _)  in enumerate(iter(test_loader)):
-        if j > 10:
-            break
-        print(j)
+def visualize_predictions(test_loader, G, step, writer):
+    n_samples = len(test_loader.dataset)
+
+    input_batch_numpy = []
+    prediction_batch_numpy = []
+    for _ in range(10):
+        random_index = int(np.random.random()*n_samples)
+        inputs, _ = test_loader.dataset[random_index]
+        inputs = inputs.unsqueeze(dim=0)
         predictions = G(inputs).cpu()
         inputs_numpy = utils.tensor2image(inputs.cpu())
         predictions_numpy = utils.tensor2image(predictions.cpu())
-        for i, (inpt, prediction) in enumerate(zip(inputs_numpy, predictions_numpy)):
-            utils.display_image_side(inpt, prediction, f'../results/simple_gan_mnist{j}.jpg')
-
+        input_batch_numpy.append(inputs_numpy[0])
+        prediction_batch_numpy.append(predictions_numpy[0])
+    input_batch_numpy = np.array(input_batch_numpy)
+    prediction_batch_numpy = np.array(prediction_batch_numpy)
+    
+    writer.add_images('inputs', input_batch_numpy, global_step = step, dataformats = 'NHWC')
+    writer.add_images('predictions', prediction_batch_numpy, global_step = step, dataformats = 'NHWC')
 
 def save_model(G_path, G, F, F_path):
     torch.save(G.state_dict(), G_path)
