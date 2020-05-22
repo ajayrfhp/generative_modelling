@@ -9,24 +9,30 @@ from sklearn.model_selection import train_test_split
 
 
 def tensor2image(x):
-      return x.detach().numpy().transpose(0, 2, 3, 1)
+      if len(list(x.size())) == 4:
+            return x.detach().numpy().transpose(0, 2, 3, 1)
+      return  x.detach().numpy().transpose(1, 2, 0)
+
 
 def image2tensor(x):
-  return torch.tensor(x.transpose(0, 3, 1, 2))
+      if len(x.shape) == 4:
+            return torch.tensor(x.transpose(0, 3, 1, 2))
+      if len(x.shape) == 3:
+            return torch.tensor(x.transpose(2, 0, 1))
+      return torch.tensor(x).unsqueeze(dim = 0)      
 
 def display_image(image):
-  plt.figure(figsize=(1,1))
-  plt.imshow(image[:,:,0], cmap = 'gray')
-  plt.show()
+      plt.figure(figsize=(1,1))
+      plt.imshow(image[:,:,0], cmap = 'gray')
+      plt.show()
 
 
 def display_image_side(image1, image2, save = None):
-    
-    plt.subplot(1, 2, 1)
-    plt.imshow(image1[:,:,0], cmap = 'gray')
-    plt.subplot(1, 2, 2)
-    plt.imshow(image2[:,:,0], cmap = 'gray')
-    if save:
-      plt.savefig(save)    
-    else:
-      plt.show()
+      plt.subplot(1, 2, 1)
+      plt.imshow(image1[:,:,0], cmap = 'gray')
+      plt.subplot(1, 2, 2)
+      plt.imshow(image2[:,:,0], cmap = 'gray')
+      if save:
+        plt.savefig(save)    
+      else:
+        plt.show()
