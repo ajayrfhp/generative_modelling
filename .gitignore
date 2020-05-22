@@ -3,3 +3,5 @@
 *.pt
 *.gz
 *-ubyte*
+*.pyc
+*__pycache_*
