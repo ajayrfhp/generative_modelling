@@ -41,11 +41,9 @@ from sklearn.model_selection import train_test_split
 from simple_gan_network import Generator, Discriminator
 import utils
 
-def train(G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer, train_loader):
-    G_losses = []
-    F_losses = []
-    D_Y_losses = []
-    D_X_losses = []
+def train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer, train_loader, writer):
+    G_losses, F_losses = 0, 0
+    D_X_losses, D_Y_losses = 0, 0
     for i, (X, Y) in enumerate(train_loader):
         if torch.cuda.is_available():
             X = X.cuda()
@@ -80,13 +78,21 @@ def train(G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer
         G_optimizer.step()
         F_optimizer.step()
         
-        G_losses.append(G_loss.mean().item())
-        F_losses.append(F_loss.mean().item())
-        D_X_losses.append(D_X_loss.mean().item())
-        D_Y_losses.append(D_Y_loss.mean().item())
+        G_losses += G_loss.item()
+        F_losses += F_loss.item()
+        D_X_losses += D_X_loss.item()
+        D_Y_losses += D_Y_loss.item()
 
-        if i % 100 == 0:
-          print(D_X_loss.mean().item(), D_Y_loss.mean().item(), G_loss.mean().item(), F_loss.mean().item(), cyclical_loss.item())
+        if i % 999 == 0:
+            writer.add_scaler('D_X_loss', D_X_losses/1000, epoch * len(train_loader) + i)
+            writer.add_scaler('D_Y_loss', D_Y_losses/1000, epoch * len(train_loader) + i)
+            writer.add_scaler('G_loss', D_losses/1000, epoch * len(train_loader) + i)
+            writer.add_scaler('F_loss', F_losses/1000, epoch * len(train_loader) + i)
+            G_losses, F_losses = 0, 0
+            D_X_losses, D_Y_losses = 0, 0
+
+        if i > 5000:
+            return 
 
 def visualize_predictions(test_loader, G):
     for j, (inputs, _)  in enumerate(iter(test_loader)):

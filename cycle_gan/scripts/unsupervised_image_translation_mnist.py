@@ -19,6 +19,7 @@ from sklearn.model_selection import train_test_split
 import utils
 from simple_gan_network import Generator, Discriminator
 from cycle_gan_utils import train, visualize_predictions, save_model, load_model
+from torch.utils.tensorboard import SummaryWriter
 
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
@@ -74,12 +75,12 @@ G_optimizer = optim.Adam(G.parameters(), lr = 1e-4)
 F_optimizer = optim.Adam(F.parameters(), lr = 1e-4)
 D_X_optimizer = optim.Adam(D_X.parameters(), lr = 1e-4)
 D_Y_optimizer = optim.Adam(D_Y.parameters(), lr = 1e-4)
+writer = SummaryWriter('runs/mnist_cycle_gan/')
 
 # Train network
 
 for epoch in range(2):
-  print(epoch)
-  train(G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer, unsupervised_train_loader)
+  train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer, unsupervised_train_loader, writer)
 
 
 save_model('../models/simple_gan_mnist_G.pt', G, F, '../models/simple_gan_mnist_F.pt')
