@@ -7,7 +7,7 @@ Original file is located at
     https://colab.research.google.com/drive/1lgGhq9JYdG1BGkTanKoGk2MY_vorY9QH
 
 """
-
+from datetime import datetime
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -75,7 +75,8 @@ G_optimizer = optim.Adam(G.parameters(), lr = 1e-4)
 F_optimizer = optim.Adam(F.parameters(), lr = 1e-4)
 D_X_optimizer = optim.Adam(D_X.parameters(), lr = 1e-4)
 D_Y_optimizer = optim.Adam(D_Y.parameters(), lr = 1e-4)
-writer = SummaryWriter()
+now = datetime.now().strftime("%Y%m%d-%H%M%S")
+writer = SummaryWriter('cycle_gan/' + now) 
 
 # Train network
 

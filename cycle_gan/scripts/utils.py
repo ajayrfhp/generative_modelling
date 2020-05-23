@@ -27,9 +27,11 @@ def display_image(image):
       plt.show()
 
 
-def display_image_side(image1, image2):
+def display_image_side(image1, image2, show = False):
       fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(5, 3))
       axes[0].imshow(image1[:,:,0], cmap = 'gray')
       axes[1].imshow(image2[:,:,0], cmap = 'gray')
       fig.tight_layout()
+      if show:
+            plt.show()
       return fig

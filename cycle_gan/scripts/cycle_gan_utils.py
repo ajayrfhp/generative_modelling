@@ -82,15 +82,15 @@ def train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_op
         F_losses += F_loss.item()
         D_X_losses += D_X_loss.item()
         D_Y_losses += D_Y_loss.item()
-
+        step = epoch * 100 + i
         if i % 4 == 0:
-            writer.add_scalar('D_X_loss', D_X_losses/5, epoch * 100 + i)
-            writer.add_scalar('D_Y_loss', D_Y_losses/5, epoch * 100 + i)
-            writer.add_scalar('G_loss', G_losses/5, epoch * 100 + i)
-            writer.add_scalar('F_loss', F_losses/5, epoch * 100 + i)
+            writer.add_scalar('D_X_loss', D_X_losses/5, step)
+            writer.add_scalar('D_Y_loss', D_Y_losses/5, step)
+            writer.add_scalar('G_loss', G_losses/5, step)
+            writer.add_scalar('F_loss', F_losses/5, step)
             G_losses, F_losses = 0, 0
             D_X_losses, D_Y_losses = 0, 0
-            visualize_predictions(test_loader, G, epoch * 100 + i, writer)
+            visualize_predictions(test_loader, G, step, writer)
 
         if i > 100:
             return 
@@ -100,20 +100,15 @@ def visualize_predictions(test_loader, G, step, writer):
 
     input_batch_numpy = []
     prediction_batch_numpy = []
-    for _ in range(10):
+    for j in range(10):
         random_index = int(np.random.random()*n_samples)
         inputs, _ = test_loader.dataset[random_index]
         inputs = inputs.unsqueeze(dim=0)
         predictions = G(inputs).cpu()
-        inputs_numpy = utils.tensor2image(inputs.cpu())
-        predictions_numpy = utils.tensor2image(predictions.cpu())
-        input_batch_numpy.append(inputs_numpy[0])
-        prediction_batch_numpy.append(predictions_numpy[0])
-    input_batch_numpy = np.array(input_batch_numpy)
-    prediction_batch_numpy = np.array(prediction_batch_numpy)
-    
-    writer.add_images('inputs', input_batch_numpy, global_step = step, dataformats = 'NHWC')
-    writer.add_images('predictions', prediction_batch_numpy, global_step = step, dataformats = 'NHWC')
+        inputs_numpy = utils.tensor2image(inputs.cpu())[0]
+        predictions_numpy = utils.tensor2image(predictions.cpu())[0]
+        figure = utils.display_image_side(inputs_numpy, predictions_numpy)
+        writer.add_figure(f'translations_{step}_{j}', figure, global_step = step)
 
 def save_model(G_path, G, F, F_path):
     torch.save(G.state_dict(), G_path)

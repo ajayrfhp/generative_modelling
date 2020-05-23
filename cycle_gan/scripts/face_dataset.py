@@ -18,15 +18,15 @@ class FaceDataset(Dataset):
     def __len__(self):
         return self.length
 
-    def __get__item(self, i):
+    def __getitem__(self, i):
         input_image = np.asarray(Image.open(self.input_root_path + self.input_files[i]))
         output_image = np.asarray(Image.open(self.output_root_path + self.output_files[i]))
         return image2tensor(input_image), image2tensor(output_image)
 
     def display(self, i):
-        input_tensor, output_tensor = self.__get__item(i)
+        input_tensor, output_tensor = self.__getitem__(i)
         input_image = tensor2image(input_tensor)
         output_image = tensor2image(output_tensor)
-        display_image_side(input_image, output_image)
+        display_image_side(input_image, output_image, show = True)
 
         
