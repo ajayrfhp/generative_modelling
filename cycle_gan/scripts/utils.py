@@ -35,3 +35,13 @@ def display_image_side(image1, image2, show = False):
       if show:
             plt.show()
       return fig
+
+def compute_means_stds(train_loader, num_samples = 1000):
+      means = 0
+      stds = 0
+      for i, (input_sample, output_sample) in enumerate(train_loader):
+            if i > num_samples:
+                  break
+            means += input_sample.mean().item() / num_samples
+            stds +=  input_sample.std().item() / num_samples
+      return means, stds

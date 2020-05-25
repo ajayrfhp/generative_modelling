@@ -38,7 +38,6 @@ from torch.utils import data
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
-from simple_gan_network import Generator, Discriminator
 import utils
 
 def train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer, train_loader, writer, test_loader):
@@ -70,8 +69,8 @@ def train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_op
 
         cyclical_loss = torch.mean(torch.abs(F(G(X)) - X)) + torch.mean(torch.abs(G(F(Y)) - Y))
         
-        G_loss = nn.BCELoss()(D_Y(G(X)), torch.ones((X.shape[0], 1))) + 2 * cyclical_loss
-        F_loss = nn.BCELoss()(D_X(F(Y)), torch.ones((X.shape[0], 1))) + 2 * cyclical_loss
+        G_loss = nn.BCELoss()(D_Y(G(X)), torch.ones((X.shape[0], 1))) + 10 * cyclical_loss
+        F_loss = nn.BCELoss()(D_X(F(Y)), torch.ones((X.shape[0], 1))) + 10 * cyclical_loss
 
         G_loss.backward(retain_graph = True)
         F_loss.backward()
@@ -82,18 +81,15 @@ def train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_op
         F_losses += F_loss.item()
         D_X_losses += D_X_loss.item()
         D_Y_losses += D_Y_loss.item()
-        step = epoch * 100 + i
-        if i % 4 == 0:
-            writer.add_scalar('D_X_loss', D_X_losses/5, step)
-            writer.add_scalar('D_Y_loss', D_Y_losses/5, step)
-            writer.add_scalar('G_loss', G_losses/5, step)
-            writer.add_scalar('F_loss', F_losses/5, step)
+        step = epoch * len(train_loader) + i
+        if i % 999 == 0:
+            writer.add_scalar('D_X_loss', D_X_losses/1000, step)
+            writer.add_scalar('D_Y_loss', D_Y_losses/1000, step)
+            writer.add_scalar('G_loss', G_losses/1000, step)
+            writer.add_scalar('F_loss', F_losses/1000, step)
             G_losses, F_losses = 0, 0
             D_X_losses, D_Y_losses = 0, 0
             visualize_predictions(test_loader, G, step, writer)
-
-        if i > 100:
-            return 
 
 def visualize_predictions(test_loader, G, step, writer):
     n_samples = len(test_loader.dataset)
@@ -107,6 +103,8 @@ def visualize_predictions(test_loader, G, step, writer):
         predictions = G(inputs).cpu()
         inputs_numpy = utils.tensor2image(inputs.cpu())[0]
         predictions_numpy = utils.tensor2image(predictions.cpu())[0]
+        inputs_numpy = (inputs_numpy * 0.5 + 0.5) * 255
+        predictions_numpy = (predictions_numpy * 0.5 + 0.5) * 255
         figure = utils.display_image_side(inputs_numpy, predictions_numpy)
         writer.add_figure(f'translations_{step}_{j}', figure, global_step = step)
 
@@ -114,7 +112,7 @@ def save_model(G_path, G, F, F_path):
     torch.save(G.state_dict(), G_path)
     torch.save(F.state_dict(), F_path)
 
-def load_model(G_path, F_path):
+def load_model(G_path, F_path, Generator):
     G = Generator()
     F = Generator()
     G.load_state_dict(torch.load(G_path))

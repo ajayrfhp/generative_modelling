@@ -62,7 +62,7 @@ unsupervised_test_loader = data.DataLoader(data.TensorDataset(utils.image2tensor
 
 x, y = next(iter(unsupervised_train_loader))
 c = utils.tensor2image(x.cpu()[0:1])
-#utils.display_image(c[0])
+utils.display_image(c[0])
 
 # Initialize network and optimizers
 
@@ -85,7 +85,7 @@ for epoch in range(1):
 
 
 save_model('../models/simple_gan_mnist_G.pt', G, F, '../models/simple_gan_mnist_F.pt')
-G, F = load_model('../models/simple_gan_mnist_G.pt', '../models/simple_gan_mnist_F.pt')
+G, F = load_model('../models/simple_gan_mnist_G.pt', '../models/simple_gan_mnist_F.pt', Generator)
 
 
 visualize_predictions(test_loader, G, 1 * 100 + 5, writer)
