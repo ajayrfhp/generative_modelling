@@ -28,3 +28,4 @@ Evaluation
 
 Conclusion
 - Stargan can scale across domains, datasets and produce better results than baselines compared in the dimensions compared. 
+

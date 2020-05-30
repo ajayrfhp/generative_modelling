@@ -30,10 +30,10 @@ test_loader = data.DataLoader(test_dataset, batch_size = 1)
 
 # Initialize network and optimizers
 
-G = Generator(1, 1,ngf=64, use_dropout=True, n_blocks=4)
-F = Generator(1, 1,ngf=64, use_dropout=True, n_blocks=4)
-D_X = Discriminator(1, ndf=64, n_layers=3)
-D_Y = Discriminator(1, ndf=64, n_layers=3)
+G = Generator(1, 1,ngf=64, use_dropout=True, n_blocks=6)
+F = Generator(1, 1,ngf=64, use_dropout=True, n_blocks=6)
+D_X = Discriminator(1, ndf=64, n_layers=4)
+D_Y = Discriminator(1, ndf=64, n_layers=4)
 
 
 G_optimizer = optim.Adam(G.parameters(), lr = 2e-4)

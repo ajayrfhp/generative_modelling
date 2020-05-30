@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils import data
+from torchsummary import summary
 import numpy as np
 """**Network code**"""
 
@@ -80,10 +81,7 @@ class Discriminator(nn.Module):
     return nn.Sigmoid()(x5)
 
 
-'''
-F = Generator()
+G = Generator()
 D = Discriminator()
-pred = F(torch.randn(5, 1, 48, 48))
-pred2 = D(pred)
-print(pred2.shape)
-'''
+print(summary(G, (1, 48, 48)))
+print(summary(D, (1, 48, 48)))

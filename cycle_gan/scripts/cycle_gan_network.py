@@ -4,6 +4,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils import data
+from torchsummary import summary
 import numpy as np
 
 class Generator(nn.Module):
@@ -169,8 +170,6 @@ class Discriminator(nn.Module):
         return self.model(input).reshape((input.shape[0], input.shape[1], -1, 1)).mean(dim=2).squeeze(dim=2)
 
 
-'''
-generator = Generator(1, 1,ngf=64, use_dropout=True, n_blocks=4)
-discriminator = Discriminator(1, ndf=64, n_layers=3)
-print(discriminator(generator(torch.randn(5, 1, 48, 48))).shape)
-'''
+#G = Generator(1, 1,ngf=64, use_dropout=True, n_blocks=6)
+#D = Discriminator(1, ndf=64, n_layers=4)
+#print(D(G(torch.randn(5, 1, 48, 48))).shape)

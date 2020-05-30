@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils import data
+from torchsummary import summary
 import numpy as np
 """**Network code**"""
 
@@ -78,3 +79,5 @@ class Discriminator(nn.Module):
     x = nn.LeakyReLU(0.2)(x) # (Batch_size, 128)
     x = self.output(x)
     return nn.Sigmoid()(x)
+
+
