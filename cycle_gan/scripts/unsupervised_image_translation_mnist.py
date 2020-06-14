@@ -17,9 +17,11 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 import utils
-from simple_gan_network import Generator, Discriminator
+from mnist_gan_network import Generator, Discriminator
 from cycle_gan_utils import train, visualize_predictions, save_model, load_model
 from torch.utils.tensorboard import SummaryWriter
+import argparse
+
 
 if torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
@@ -27,68 +29,84 @@ if torch.cuda.is_available():
 
 # Load raw data
 
-batch_size = 25
+def training_mode(model_name):
 
-train_loader = torch.utils.data.DataLoader(
+    batch_size = 25
+
+    train_loader = torch.utils.data.DataLoader(
         datasets.MNIST('../data', train=True, download=True,
-                       transform=transforms.Compose([
-                           transforms.ToTensor(),
-                           transforms.Normalize((0.5,), (0.5,))
-                       ])),
-        batch_size=batch_size, shuffle=True)
-
-test_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('../data', train=False, transform=transforms.Compose([
+                    transform=transforms.Compose([
                         transforms.ToTensor(),
                         transforms.Normalize((0.5,), (0.5,))
                     ])),
-    batch_size=batch_size, shuffle=True)
+        batch_size=batch_size, shuffle=True)
+
+    test_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('../data', train=False, transform=transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5,), (0.5,))
+        ])),
+        batch_size=batch_size, shuffle=True)
 
 
-# Prepare unpaired image translation dataset
+    # Prepare unpaired image translation dataset
 
 
-X = np.array([ utils.tensor2image(image_batch) for image_batch, _ in train_loader])
-X = X.reshape((X.shape[0] * X.shape[1], X.shape[2], X.shape[3], X.shape[4]))
-Y = np.array(X) * -1
-np.random.shuffle(Y)
+    X = np.array([utils.tensor2image(image_batch)
+                for image_batch, _ in train_loader])
+    X = X.reshape((X.shape[0] * X.shape[1], X.shape[2], X.shape[3], X.shape[4]))
+    Y = np.array(X) * -1
+    np.random.shuffle(Y)
 
-#utils.display_image(X[0])
-#utils.display_image(Y[0])
+    # utils.display_image(X[0])
+    # utils.display_image(Y[0])
 
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y)
-unsupervised_train_loader = data.DataLoader(data.TensorDataset(utils.image2tensor(X_train), utils.image2tensor(Y_train)), batch_size=1)
-unsupervised_test_loader = data.DataLoader(data.TensorDataset(utils.image2tensor(X_test), utils.image2tensor(Y_test)), batch_size=1)
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y)
+    unsupervised_train_loader = data.DataLoader(data.TensorDataset(
+        utils.image2tensor(X_train), utils.image2tensor(Y_train)), batch_size=1)
+    unsupervised_test_loader = data.DataLoader(data.TensorDataset(
+        utils.image2tensor(X_test), utils.image2tensor(Y_test)), batch_size=1)
 
-x, y = next(iter(unsupervised_train_loader))
-c = utils.tensor2image(x.cpu()[0:1])
-utils.display_image(c[0])
+    x, y = next(iter(unsupervised_train_loader))
+    c = utils.tensor2image(x.cpu()[0:1])
+    utils.display_image(c[0])
 
-# Initialize network and optimizers
+    # Initialize network and optimizers
 
-G = Generator()
-F = Generator()
-D_X = Discriminator()
-D_Y = Discriminator()
+    G = Generator()
+    F = Generator()
+    D_X = Discriminator()
+    D_Y = Discriminator()
 
-G_optimizer = optim.Adam(G.parameters(), lr = 1e-4)
-F_optimizer = optim.Adam(F.parameters(), lr = 1e-4)
-D_X_optimizer = optim.Adam(D_X.parameters(), lr = 1e-4)
-D_Y_optimizer = optim.Adam(D_Y.parameters(), lr = 1e-4)
-now = datetime.now().strftime("%Y%m%d-%H%M%S")
-writer = SummaryWriter('cycle_gan/' + now) 
+    G_optimizer = optim.Adam(G.parameters(), lr=1e-4)
+    F_optimizer = optim.Adam(F.parameters(), lr=1e-4)
+    D_X_optimizer = optim.Adam(D_X.parameters(), lr=1e-4)
+    D_Y_optimizer = optim.Adam(D_Y.parameters(), lr=1e-4)
+    writer = SummaryWriter(model_name)
 
-# Train network
+    # Train network
+    for epoch in range(1):
+        train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer,
+            D_Y_optimizer, unsupervised_train_loader, writer, test_loader, max_samples_per_batch = 4000)
 
-for epoch in range(1):
-  train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_optimizer, unsupervised_train_loader, writer, test_loader)
+    save_model(f'../models/{model_name}_G.pt', G, F, f'../models/{model_name}_F.pt')
 
-
-save_model('../models/simple_gan_mnist_G.pt', G, F, '../models/simple_gan_mnist_F.pt')
-G, F = load_model('../models/simple_gan_mnist_G.pt', '../models/simple_gan_mnist_F.pt', Generator)
-
-
-visualize_predictions(test_loader, G, 1 * 100 + 5, writer)
+def testing_mode():
+    G, F = load_model(f'../models/{model_name}_G.pt', f'../models/{model_name}_F.pt', G, F)
+    visualize_predictions(test_loader, G, 1 * len(train_loader) + 5, writer)
 
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description='Provide information about model and mode')
+    parser.add_argument('--model_name', type=str, dest='model_name',
+                        help='model name to associate with tensorboard')
+    parser.add_argument('--mode', type=str, dest='mode', help='train/test')
+    parsed = parser.parse_args()
+    model_name = parsed.model_name
+    mode = parsed.mode
+    if mode == 'train':
+        training_mode(model_name)
+    if mode == 'test':
+        testing_mode(model_name)
 
