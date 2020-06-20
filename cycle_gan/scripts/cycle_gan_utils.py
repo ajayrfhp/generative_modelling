@@ -59,11 +59,19 @@ def train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_op
         # train D_X, D_Y
         D_X.zero_grad()
         D_Y.zero_grad()
+        fake_Y = D_Y(G(X))
+        D_Y_real_loss = nn.BCELoss()(D_Y(Y), torch.ones(
+            (X.shape[0], fake_Y.shape[1])))
 
-        D_Y_loss = nn.BCELoss()(D_Y(Y), torch.ones(
-            (X.shape[0], 1))) + nn.BCELoss()(D_Y(G(X)), torch.zeros((X.shape[0], 1)))
-        D_X_loss = nn.BCELoss()(D_X(X), torch.ones(
-            (X.shape[0], 1))) + nn.BCELoss()(D_X(F(Y)), torch.zeros((X.shape[0], 1)))
+        D_Y_fake_loss = nn.BCELoss()(fake_Y, torch.zeros((X.shape[0], fake_Y.shape[1])))
+        D_Y_loss = D_Y_real_loss + D_Y_fake_loss
+
+        fake_X = D_X(F(Y))
+        D_X_real_loss = nn.BCELoss()(D_X(X), torch.ones(
+            (X.shape[0], fake_X.shape[1])))
+        D_X_fake_loss = nn.BCELoss()(fake_X, torch.zeros((X.shape[0], fake_X.shape[1])))
+        D_X_loss =  D_X_real_loss + D_X_fake_loss
+
         D_Y_loss.backward(retain_graph=True)
         D_X_loss.backward(retain_graph=True)
         D_X_optimizer.step()
@@ -79,12 +87,12 @@ def train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer, D_Y_op
 
         cycle_loss = 10 * torch.mean(
             torch.abs(F(G(X)) - X)) + torch.mean(torch.abs(G(F(Y)) - Y))
-        G_loss = nn.BCELoss()(D_Y(G(X)), torch.ones(
-            (X.shape[0], 1)))
+        G_loss = nn.BCELoss()(fake_Y, torch.ones(
+            (X.shape[0], fake_Y.shape[1])))
         G_total_loss =  G_loss + cycle_loss
         
-        F_loss = nn.BCELoss()(D_X(F(Y)), torch.ones(
-            (X.shape[0], 1))) 
+        F_loss = nn.BCELoss()(fake_X, torch.ones(
+            (X.shape[0], fake_X.shape[1]))) 
         F_total_loss = F_loss + cycle_loss
 
         G_total_loss.backward(retain_graph=True)

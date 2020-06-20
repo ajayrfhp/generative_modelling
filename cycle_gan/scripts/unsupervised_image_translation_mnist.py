@@ -17,7 +17,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 import utils
-from mnist_gan_network import Generator, Discriminator
+from cycle_gan_network import Generator, Discriminator
 from cycle_gan_utils import train, visualize_predictions, save_model, load_model
 from torch.utils.tensorboard import SummaryWriter
 import argparse
@@ -73,10 +73,10 @@ def training_mode(model_name):
 
     # Initialize network and optimizers
 
-    G = Generator()
-    F = Generator()
-    D_X = Discriminator()
-    D_Y = Discriminator()
+    G = Generator(1, 1, num_blocks = 3)
+    F = Generator(1, 1, num_blocks = 3)
+    D_X = Discriminator(1)
+    D_Y = Discriminator(1)
 
     G_optimizer = optim.Adam(G.parameters(), lr=1e-4)
     F_optimizer = optim.Adam(F.parameters(), lr=1e-4)

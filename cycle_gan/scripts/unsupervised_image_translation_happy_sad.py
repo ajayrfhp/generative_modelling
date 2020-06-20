@@ -36,11 +36,11 @@ def training_mode(model_name):
 
     # Initialize network and optimizers
 
-    G = Generator(3, 3, ngf=64, use_dropout=True, n_blocks=6)
-    F = Generator(3, 3, ngf=64, use_dropout=True, n_blocks=6)
-    D_X = Discriminator(3, ndf=64, n_layers=4)
-    D_Y = Discriminator(3, ndf=64, n_layers=4)
-
+    G = Generator(3, 3, num_blocks = 2)
+    F = Generator(3, 3, num_blocks = 2)
+    
+    D_X, D_Y = Discriminator(3), Discriminator(3)
+    
     G_optimizer = optim.Adam(G.parameters(), lr=2e-4)
     F_optimizer = optim.Adam(F.parameters(), lr=2e-4)
     D_X_optimizer = optim.Adam(D_X.parameters(), lr=2e-4)
@@ -48,7 +48,7 @@ def training_mode(model_name):
     writer = SummaryWriter(model_name)
 
     # Train network
-    for epoch in range(1):
+    for epoch in range(5):
         print('epoch ', epoch)
         train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer,
               D_X_optimizer, D_Y_optimizer, train_loader, writer, test_loader)
@@ -57,8 +57,8 @@ def training_mode(model_name):
 
 
 def testing_mode(model_name):
-    G = Generator(3, 3, ngf=64, use_dropout=True, n_blocks=6)
-    F = Generator(3, 3, ngf=64, use_dropout=True, n_blocks=6)
+    G = Generator(3, 3, num_blocks = 2)
+    D = Discriminator(3)
     G, F = load_model(f'../models/{model_name}_G.pt', f'../models/{model_name}_F.pt', G, F)
     if torch.cuda.is_available():
         torch.set_default_tensor_type('torch.cuda.FloatTensor')

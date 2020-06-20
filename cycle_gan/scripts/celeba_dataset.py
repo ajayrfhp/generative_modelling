@@ -18,7 +18,7 @@ class CelebADataset(Dataset):
         self.output_files = self.negative['image_id'].tolist()
         self.transform = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.Resize((128, 128)),
+            transforms.Resize((64, 64)),
             transforms.ToTensor(),
             transforms.Normalize([0.5, 0.5, 0.5, ], [0.5, 0.5, 0.5, ])
         ])
