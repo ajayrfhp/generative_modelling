@@ -6,7 +6,7 @@ from torch.utils import data
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
-
+plt.rcParams.update({'font.size': 30})
 
 def tensor2image(x):
     if len(list(x.size())) == 4:
@@ -21,6 +21,14 @@ def image2tensor(x):
         return torch.tensor(x.transpose(2, 0, 1))
     return torch.tensor(x).unsqueeze(dim=0)
 
+def display_images(images):
+    titles = ["inputs", "predictions", "mask", "copied", "synthesized", "weighted_synthesized"]
+    fig, axes = plt.subplots(nrows = 1, ncols = len(images), figsize = (100, 30))
+    for ax, image, title in zip(axes, images, titles):
+        ax.set_title(title)
+        ax.imshow(image.astype(np.uint8))
+    return fig
+        
 
 def display_image(image):
     if image.shape[2] == 1:

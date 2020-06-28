@@ -53,16 +53,16 @@ class Generator(nn.Module):
     mask = mask_net(input)
     predictions = mask * inputs + (1-mask) * syn
     '''
-    def __init__(self, mask_net, syn_net):
+    def __init__(self, in_channels):
         super(Generator, self).__init__()
-        self.mask_net = mask_net
-        self.syn_net = syn_net
-        
+        self.mask_net, self.syn_net = MaskNet(in_channels), SynNet(in_channels)
 
     def forward(self, x):
         mask = self.mask_net(x)
         synthesized = self.syn_net(x)
-        return mask * x + (1 - mask) * synthesized
+        copied = mask * x
+        weighted_synthesized = (1 - mask) * synthesized
+        return copied + weighted_synthesized, mask, copied, synthesized, weighted_synthesized 
 
 class Discriminator(nn.Module):
     '''
@@ -72,6 +72,15 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.model = nn.Sequential(*[
             nn.Conv2d(in_channels, 64, 4, 2, 1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(64, 64, 4, 2, 1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(64, 64, 4, 2, 1),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.2),
+            nn.Conv2d(64, 64, 4, 2, 1),
             nn.BatchNorm2d(64),
             nn.LeakyReLU(0.2),
             nn.Conv2d(64, 128, 4, 2, 1),
@@ -97,10 +106,10 @@ if __name__ == '__main__':
     print(SynNet(1).forward(torch.randn((5, 1, 64, 64))).shape)
 
     # Test Generator
-    mask_net, syn_net = MaskNet(1), SynNet(1)
-    generator = Generator(mask_net, syn_net)
-    print(generator(torch.randn((5, 1, 28, 28))).shape)
+    
+    generator = Generator(1)
+    print(generator(torch.randn((5, 1, 28, 28)))[0].shape)
 
     # Test Discriminator
-    print(Discriminator(1)(generator(torch.randn((5, 1, 28, 28)))).shape)
+    print(Discriminator(1)(generator(torch.randn((5, 1, 28, 28)))[0]).shape)
 

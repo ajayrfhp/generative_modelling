@@ -73,21 +73,21 @@ def training_mode(model_name):
 
     # Initialize network and optimizers
 
-    G = Generator(1, 1, num_blocks = 3)
-    F = Generator(1, 1, num_blocks = 3)
-    D_X = Discriminator(1)
-    D_Y = Discriminator(1)
+    G = Generator(3)
+    F = Generator(3)
+    D_X = Discriminator(3)
+    D_Y = Discriminator(3)
 
-    G_optimizer = optim.Adam(G.parameters(), lr=1e-4)
-    F_optimizer = optim.Adam(F.parameters(), lr=1e-4)
-    D_X_optimizer = optim.Adam(D_X.parameters(), lr=1e-4)
-    D_Y_optimizer = optim.Adam(D_Y.parameters(), lr=1e-4)
+    G_optimizer = optim.Adam(G.parameters(), lr=1e-3)
+    F_optimizer = optim.Adam(F.parameters(), lr=1e-3)
+    D_X_optimizer = optim.Adam(D_X.parameters(), lr=1e-3)
+    D_Y_optimizer = optim.Adam(D_Y.parameters(), lr=1e-3)
     writer = SummaryWriter(model_name)
 
     # Train network
     for epoch in range(1):
         train(epoch, G, F, D_X, D_Y, G_optimizer, F_optimizer, D_X_optimizer,
-            D_Y_optimizer, unsupervised_train_loader, writer, test_loader, max_samples_per_batch = 4000)
+            D_Y_optimizer, unsupervised_train_loader, writer, test_loader)
 
     save_model(f'../models/{model_name}_G.pt', G, F, f'../models/{model_name}_F.pt')
 

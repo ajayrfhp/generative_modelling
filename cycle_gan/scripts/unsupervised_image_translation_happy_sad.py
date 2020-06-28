@@ -14,7 +14,7 @@ import matplotlib
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 import utils
-from cycle_gan_network import Generator, Discriminator
+from mask_gan_network import Generator, Discriminator
 from cycle_gan_utils import train, visualize_predictions, save_model, load_model
 from celeba_dataset import CelebADataset
 import argparse
@@ -36,15 +36,15 @@ def training_mode(model_name):
 
     # Initialize network and optimizers
 
-    G = Generator(3, 3, num_blocks = 2)
-    F = Generator(3, 3, num_blocks = 2)
+    G = Generator(3)
+    F = Generator(3)
+    D_X = Discriminator(3)
+    D_Y = Discriminator(3)
     
-    D_X, D_Y = Discriminator(3), Discriminator(3)
-    
-    G_optimizer = optim.Adam(G.parameters(), lr=2e-4)
-    F_optimizer = optim.Adam(F.parameters(), lr=2e-4)
-    D_X_optimizer = optim.Adam(D_X.parameters(), lr=2e-4)
-    D_Y_optimizer = optim.Adam(D_Y.parameters(), lr=2e-4)
+    G_optimizer = optim.Adam(G.parameters(), lr=1e-3)
+    F_optimizer = optim.Adam(F.parameters(), lr=1e-3)
+    D_X_optimizer = optim.Adam(D_X.parameters(), lr=1e-3)
+    D_Y_optimizer = optim.Adam(D_Y.parameters(), lr=1e-3)
     writer = SummaryWriter(model_name)
 
     # Train network
@@ -57,7 +57,7 @@ def training_mode(model_name):
 
 
 def testing_mode(model_name):
-    G = Generator(3, 3, num_blocks = 2)
+    G = Generator(3)
     D = Discriminator(3)
     G, F = load_model(f'../models/{model_name}_G.pt', f'../models/{model_name}_F.pt', G, F)
     if torch.cuda.is_available():
