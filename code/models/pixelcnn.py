@@ -22,16 +22,17 @@ class CausalConv(nn.Conv2d):
     '''
     def __init__(self, mask_type = 'B', in_channels = 1, out_channels = 1, kernel_size = 3, padding = 1):
         super(CausalConv, self).__init__(in_channels=in_channels,out_channels=out_channels,kernel_size=kernel_size,padding=padding)
-        self.register_buffer('mask', torch.ones((out_channels, kernel_size, kernel_size)))
+        
+        self.register_buffer('mask', torch.ones(self.weight.data.shape))
 
         for i in range(kernel_size):
             for j in range(kernel_size):
                 if mask_type == 'A':
                     if i >= kernel_size / 2  or (i == kernel_size // 2 and j >= kernel_size // 2 ):
-                        self.mask[:, i, j] = 0
+                        self.mask[:, :, i, j] = 0
                 else:
                     if i >= kernel_size / 2  or (i == kernel_size // 2 and j > kernel_size // 2 ):
-                        self.mask[:, i, j] = 0
+                        self.mask[:,:, i, j] = 0
 
     def forward(self, input):
         self.weight.data *= self.mask
@@ -59,9 +60,9 @@ class PixelCNN(nn.Module):
     '''
     def __init__(self, in_channels = 1, hidden_channels = 64, out_channels = 1, num_conv_blocks = 5, kernel_size = 3, nin = 784):
         super(PixelCNN, self).__init__()
-        self.input_conv = CausalConvA(in_channels=in_channels, out_channels=hidden_channels, kernel_size=kernel_size)
-        self.conv_blocks = [ CasualConvB(in_channels=hidden_channels, out_channels=hidden_channels, kernel_size=kernel_size) for _ in range(num_conv_blocks)]
-        self.output_conv = CasualConvB(in_channels=hidden_channels, out_channels=out_channels, kernel_size = kernel_size)
+        self.input_conv = ConvBlock(mask_type="A", in_channels=in_channels, out_channels=hidden_channels, kernel_size=kernel_size)
+        self.conv_blocks = [ ConvBlock(in_channels=hidden_channels, out_channels=hidden_channels, kernel_size=kernel_size) for _ in range(num_conv_blocks)]
+        self.output_conv = ConvBlock(in_channels=hidden_channels, out_channels=out_channels, kernel_size = kernel_size)
         self.net = nn.Sequential(*([self.input_conv] + self.conv_blocks + [self.output_conv]))
         self.nin = nin
 
@@ -112,3 +113,8 @@ if __name__ == '__main__':
     conv_block_b = ConvBlock(padding = 0, unit_test = True)
     x = torch.tensor([[9, 1, 2], [3, -1, 5], [6, 7111, 800000]]).unsqueeze(0).unsqueeze(0).to(torch.float)
     assert(conv_block_b(x)[0][0][0][0].item() == 14)
+
+    pixel_cnn = PixelCNN()
+    random_input = torch.randn((1, 28, 28))
+    print(pixel_cnn.nll(random_input))
+    visualize_predictions(None, pixel_cnn, 'pixel_cnn')
